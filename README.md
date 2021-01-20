@@ -1,1 +1,3 @@
-"# canva-paint-server" 
+# canva-paint-server
+
+c++ backend for CanvaPaint
