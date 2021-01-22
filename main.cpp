@@ -1,6 +1,4 @@
-
 #include "server/ws/ws_server.h"
-
 #include <iostream>
 
 class ChatSession : public CppServer::WS::WSSession
@@ -36,32 +34,36 @@ protected:
             Close(1000);
     }
 
+    void onWSPing(const void* buffer, size_t size) override
+    {
+        SendPongAsync(buffer, size);
+    }
+
     void onError(int error, const std::string& category, const std::string& message) override
     {
         std::cout << "Chat WebSocket session caught an error with code " << error << " and category '" << category << "': " << message << std::endl;
     }
 };
 
-class ChatServer : public CppServer::WS::WSServer
-{
+class ChatServer : public CppServer::WS::WSServer {
 public:
     using CppServer::WS::WSServer::WSServer;
+
 
 protected:
     std::shared_ptr<CppServer::Asio::TCPSession> CreateSession(const std::shared_ptr<CppServer::Asio::TCPServer>& server) override
     {
-        return std::make_shared<ChatSession>(std::dynamic_pointer_cast<CppServer::WS::WSServer>(server));
+        return std::make_shared<ChatSession>(std::dynamic_pointer_cast<WSServer>(server));
     }
 
-protected:
     void onError(int error, const std::string& category, const std::string& message) override
     {
         std::cout << "Chat WebSocket server caught an error with code " << error << " and category '" << category << "': " << message << std::endl;
     }
 };
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
+
     // WebSocket server port
     int port = 8080;
     if (argc > 1)
@@ -87,10 +89,7 @@ int main(int argc, char** argv)
 
     // Create a new WebSocket chat server
     auto server = std::make_shared<ChatServer>(service, port);
-    // server->AddStaticContent(www, "/chat");
 
-    // Start the server
-    std::cout << "Server starting...";
     server->Start();
     std::cout << "Done!" << std::endl;
 
