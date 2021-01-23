@@ -1,66 +1,93 @@
 <!DOCTYPE html>
-<meta charset="utf-8" />
-<title>WebSocket Test</title>
-<script language="javascript" type="text/javascript">
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>WST</title>
+</head>
+<body>
+<script>
+    
+    let socket;
+    const init = () => {
+        document.testForm.url.value = `ws://localhost:3000/`;
+        document.testForm.inputtext.value = `Hello World!`;
+        document.testForm.disconnectButton.disabled = true;
+    };
 
-    var wsUri = "wss://localhost:3000/";
-    var output;
+    const doConnect = () => {
+        socket = new WebSocket(document.testForm.url.value);
+        socket.onopen = onOpen;
+        socket.onclose = onClose;
+        socket.onmessage = onMessage;
+        socket.onerror = onError;
+    };
 
-    function init()
-    {
-        output = document.getElementById("output");
-        testWebSocket();
+    const onOpen = (evt) => {
+        writeToScreen(`connected\n`);
+        document.testForm.connectButton.disabled = true;
+        document.testForm.disconnectButton.disabled = false;
     }
 
-    function testWebSocket()
-    {
-        websocket = new WebSocket(wsUri);
-        websocket.onopen = function(evt) { onOpen(evt) };
-        websocket.onclose = function(evt) { onClose(evt) };
-        websocket.onmessage = function(evt) { onMessage(evt) };
-        websocket.onerror = function(evt) { onError(evt) };
+    const onClose = (evt) => {
+        writeToScreen(`disconnected\n`);
+        document.testForm.connectButton.disabled = false;
+        document.testForm.disconnectButton.disabled = true;
     }
 
-    function onOpen(evt)
-    {
-        writeToScreen("CONNECTED");
-        doSend("WebSocket rocks");
+    const onMessage = (evt) => {
+        writeToScreen(`response: ${evt.data}\n`);
     }
 
-    function onClose(evt)
-    {
-        writeToScreen("DISCONNECTED");
+    const onError = (evt) => {
+        writeToScreen(`error: ${evt.data}\n`);
+        socket.close();
+        document.testForm.connectButton.disabled = false;
+        document.testForm.disconnectButton.disabled = true;
     }
 
-    function onMessage(evt)
-    {
-        writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
-        websocket.close();
+    const doSend = (message) => {
+        writeToScreen(`sent: ${message}\n`);
+        socket.send(message);
     }
 
-    function onError(evt)
-    {
-        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+    const writeToScreen = (message) => {
+        document.testForm.outputtext.value += message
+        document.testForm.outputtext.scrollTop = document.testForm.outputtext.scrollHeight
     }
 
-    function doSend(message)
-    {
-        writeToScreen("SENT: " + message);
-        websocket.send(message);
+    window.onload = init;
+
+    const sendText = () => {
+        doSend(document.testForm.inputtext.value);
     }
 
-    function writeToScreen(message)
-    {
-        var pre = document.createElement("p");
-        pre.style.wordWrap = "break-word";
-        pre.innerHTML = message;
-        output.appendChild(pre);
+    const clearText = () => {
+        document.testForm.outputtext.value = ``;
     }
 
-    window.addEventListener("load", init, false);
+    const doDisconnect = () => {
+        socket.close();
+    }
 
 </script>
-
-<h2>WebSocket Test</h2>
-
-<div id="output"></div>
+<form name="testForm">
+    <p>
+        <textarea name="url" cols="50" rows="1"></textarea>
+    </p>
+    <p>
+        <input name=connectButton type="button" value="Connect" onClick="doConnect()"/>
+        <input name=disconnectButton type="button" value="Disconnect" onClick="doDisconnect()"/>
+    </p>
+    <p>
+        <textarea name="outputtext" cols="50" rows="20"></textarea>
+    </p>
+    <p>
+        <textarea name="inputtext" cols="50" rows="1"></textarea>
+    </p>
+    <p>
+        <input type="button" name=sendButton value="Send" onClick="sendText()">
+        <input type="button" name=clearButton value="Clear" onClick="clearText()">
+    </p>
+</form>
+</body>
+</html>
